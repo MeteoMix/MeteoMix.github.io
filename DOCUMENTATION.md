@@ -13,4 +13,10 @@
   - *Tech Notes*:
     - **Fase 1 (Frontend)**: Inserita integrazione con l'API gratuita `Open-Meteo` in Geocoding e Forecast su `Result.tsx`. Aggiunti Loading e Error states. Il frontend funziona anche senza backend mostrandolo come unica fonte di "Dati Reali".
     - **Fase 3 (Backend Proxy)**: Creato server Express separato in `server.js`. Usa `axios` e `cheerio` per fare scraping su IlMeteo.it estraendo i text OG. Fallback robusto agli altri servizi in caso di blocco CORS IP (visto che 3BMeteo rifiuta programmaticamente i server senza cache). Aggiunti `express`, `cors`, `axios`, `cheerio` al `package.json`. Nuovo script `npm run dev:server`.
-    - **Current Status**: L'architettura prevede che se il backend *non* è attivo, l'app usa in gracefully fallback a Open-Meteo.
+- [2026-04-15 22:01:00]: Proxy Scraper v2.0 (Enterprise Upgrade)
+  - *Details*: Riscrittura completa del backend scraping locale per massimizzare l'affidabilità e abbattere i tempi di risposta.
+  - *Tech Notes*:
+    - **In-Memory Caching**: Aggiunto un sistema Map() con TTL di 15 minuti. Evita ip-ban e alleggerisce il carico sui server target.
+    - **Axios Retry Pattern**: Introdotto un wrapper `fetchWithRetry` con backoff esponenziale automatico e spoofing iterativo degli header / User-Agents e Referers per raggirare firewall.
+    - **Promise.allSettled**: Le routines di scraping ora girano in parallelo. Se un micro-servizio crasha, gli altri completano senza abbattere l'endpoint.
+    - **Robust Cheerio Parsing**: Aggiunti fallback successivi con Regex robuste nel parsing dell'HTML.
