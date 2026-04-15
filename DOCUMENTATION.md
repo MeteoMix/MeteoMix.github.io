@@ -19,4 +19,10 @@
     - **In-Memory Caching**: Aggiunto un sistema Map() con TTL di 15 minuti. Evita ip-ban e alleggerisce il carico sui server target.
     - **Axios Retry Pattern**: Introdotto un wrapper `fetchWithRetry` con backoff esponenziale automatico e spoofing iterativo degli header / User-Agents e Referers per raggirare firewall.
     - **Promise.allSettled**: Le routines di scraping ora girano in parallelo. Se un micro-servizio crasha, gli altri completano senza abbattere l'endpoint.
-    - **Robust Cheerio Parsing**: Aggiunti fallback successivi con Regex robuste nel parsing dell'HTML.
+- [2026-04-15 22:05:00]: Proxy Scraper v3.0 (Multi-Provider Sweep)
+  - *Details*: Estensione dello scraping a molteplici siti meteorologici con approcci differenziati per gestire i singoli domini target.
+  - *Tech Notes*:
+    - **Meteoblue**: Implementato pre-fetch alle REST API interne del sito di ricerca (query3) per trovare risoluzione sicura URL dell'ID univoco di città, unita a regex sull'HTML `.current-temp`.
+    - **3BMeteo**: Aggiunta logica di Header impersonation nativa ed estrazione da testo non strutturato (Meta Titoli) per sfuggire al ban degli IP Bot.
+    - **MeteoAM**: Integrata risoluzione URL in lowercase format + extraction query per i domini istituzionali legati alle SPA (Client-Side Rendering detection).
+    - **Parallelizzazione Totale**: Tutti e 4 gli ambiti (iLMeteo, 3BMeteo, Meteoblue, MeteoAM) partono insieme e non dipendono l'uno dall'altro. Se uno subisce il down, gli altri continuano con successo.
