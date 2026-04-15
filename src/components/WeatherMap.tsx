@@ -164,7 +164,7 @@ const WeatherMap: React.FC<WeatherMapProps> = ({ locationQuery, lat, lon, avgTem
       <MapContainer 
         center={center} 
         zoom={zoom} 
-        style={{ height: '600px', width: '100%', border: 'none' }}
+        style={{ height: '100%', width: '100%', border: 'none' }}
         zoomControl={false}
       >
         <MapController center={center} zoom={zoom} />

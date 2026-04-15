@@ -130,7 +130,7 @@ const Result: React.FC = () => {
   }, [forecasts]);
 
   return (
-    <div className="result-container">
+    <div className={`result-container ${viewMode === 'map' ? 'view-map-mode' : ''}`}>
       <header className="result-header glass-panel">
         <div className="result-header-content">
           <Link to="/" className="back-button">
@@ -170,7 +170,7 @@ const Result: React.FC = () => {
           </div>
         </div>
 
-        <div className="animate-fade-in" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <div className="animate-fade-in content-wrapper" style={{ width: '100%', display: 'flex', justifyContent: 'center', flex: viewMode === 'map' ? 1 : 'initial' }}>
           {isLoading ? (
              <LoadingScanner />
           ) : error ? (

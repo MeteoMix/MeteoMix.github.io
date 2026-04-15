@@ -117,3 +117,10 @@
 - [2026-04-15 23:09:00]: Vercel Build Error Fix (TS6133)
   - *Details*: Fixed Vercel build failing due to strict TypeScript unused variable checks.
   - *Tech Notes*: Removed unused `MapIcon` and `setZoom` from `WeatherMap.tsx` and `Loader2` from `Result.tsx` to resolve `TS6133` compilation errors.
+- [2026-04-15 23:14:00]: Responsive Map Height (Single Screen View)
+  - *Details*: Implementata la visualizzazione responsive della mappa per garantire che l'intero contenuto (header, controlli e mappa) sia visibile in una singola schermata senza scrolling.
+  - *Tech Notes*:
+    - **Dynamic Sizing**: Impostata l'altezza della `.result-container` a `100vh` con `overflow: hidden` quando la modalità mappa è attiva.
+    - **Flex Layout Expansion**: Utilizzato `flex: 1` su `result-main` e sul wrapper della mappa per forzare Leaflet a riempire tutto lo spazio verticale disponibile.
+    - **Responsive CSS**: Aggiunta la classe `.view-map-mode` per triggerare stili specifici che riducono i margini e le dimensioni degli elementi su mobile, massimizzando l'area dedicata alla mappa.
+    - **WeatherMap.tsx**: Rimossa l'altezza fissa di `600px` in favore di un'altezza dinamica al `100%`.
