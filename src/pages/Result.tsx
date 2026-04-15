@@ -30,6 +30,7 @@ const Result: React.FC = () => {
   const queryParam = useQuery().get('q') || '';
   const [viewMode, setViewMode] = useState<'cards' | 'map'>('cards');
   const [forecasts, setForecasts] = useState<Forecast[]>([]);
+  const [coords, setCoords] = useState<{lat: number, lon: number} | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +49,7 @@ const Result: React.FC = () => {
         }
 
         const { latitude, longitude } = geoData.results[0];
+        setCoords({ lat: latitude, lon: longitude });
 
         // 2. Weather
         const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
@@ -92,21 +94,8 @@ const Result: React.FC = () => {
              throw new Error("Backend response not ok");
           }
         } catch (backendError) {
-          console.warn("Backend Proxy non attivo! Esegui 'npm run dev:server' per attivare lo scraping reale.", backendError);
-          // Phase 1 Fallback: slight variations to keep UI alive
-          const hash = queryParam.length;
-          otherData = providers.map((p, i) => {
-            const tempVar = (Math.abs(hash + i) % 3) - 1; // -1 to +1 variation
-            return {
-              name: p.name,
-              url: p.url,
-              prediction: {
-                temp: Math.round(currentTemp + tempVar),
-                condition,
-                description
-              }
-            };
-          });
+          console.warn("Backend Proxy non attivo o errore durante lo scraping reale.", backendError);
+          otherData = []; // No fake data allowed
         }
 
         setForecasts([realData, ...otherData]);
@@ -122,7 +111,7 @@ const Result: React.FC = () => {
 
   const avgTemp = forecasts.length > 0 
     ? Math.round(forecasts.reduce((acc, curr) => acc + curr.prediction.temp, 0) / forecasts.length) 
-    : 0;
+    : undefined;
 
   return (
     <div style={styles.container}>
@@ -136,7 +125,7 @@ const Result: React.FC = () => {
             <h1 style={styles.title}>
               Previsioni per <span className="text-gradient">"{queryParam}"</span>
             </h1>
-            {!isLoading && !error && (
+            {!isLoading && !error && avgTemp !== undefined && (
               <div style={styles.avgBadge}>
                 Media: {avgTemp}°C
               </div>
@@ -180,7 +169,7 @@ const Result: React.FC = () => {
             <div style={styles.grid}>
               {forecasts.map((f, idx) => (
                 <WeatherCard 
-                  key={idx}
+                   key={idx}
                   siteName={f.name}
                   url={f.url}
                   prediction={f.prediction}
@@ -189,7 +178,13 @@ const Result: React.FC = () => {
             </div>
           ) : (
             <div style={styles.mapContainer}>
-              <WeatherMap locationQuery={queryParam} />
+              <WeatherMap 
+                locationQuery={queryParam} 
+                lat={coords?.lat} 
+                lon={coords?.lon} 
+                avgTemp={avgTemp}
+                currentCondition={forecasts[0]?.prediction?.condition}
+              />
             </div>
           )}
         </div>
@@ -197,6 +192,7 @@ const Result: React.FC = () => {
     </div>
   );
 };
+
 
 const styles = {
   container: {

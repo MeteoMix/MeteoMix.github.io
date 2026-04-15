@@ -123,18 +123,125 @@ button {
   padding: 0 1.5rem;
 }
 
-/* Map Overrides */
+/* Map Overrides & UI */
 .leaflet-container {
-  background-color: #1a1b26;
-  font-family: 'Outfit', sans-serif;
+  background-color: #0b0c10 !important;
+  font-family: 'Outfit', sans-serif !important;
+  border-radius: 24px !important;
 }
-.leaflet-popup-content-wrapper {
-  background: rgba(20, 20, 30, 0.9);
+
+.premium-popup .leaflet-popup-content-wrapper {
+  background: rgba(10, 11, 16, 0.8) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 20px !important;
+  color: white !important;
+  padding: 5px !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8) !important;
+}
+
+.premium-popup .leaflet-popup-tip {
+  background: rgba(10, 11, 16, 0.8) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* WOW Floating UI */
+.map-overlay-card {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: 280px;
+  pointer-events: auto;
+  border-radius: 20px;
+  padding: 20px;
+  background: rgba(15, 17, 26, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  animation: slideInRight 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(50px) scale(0.9); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* Custom Modern Markers */
+.pulse-marker {
+  width: 24px;
+  height: 24px;
+  background: #5c6bc0;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(92, 107, 192, 0.8);
+  position: relative;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-marker::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #5c6bc0;
+  animation: pulse-aura 2.5s ease-out infinite;
+}
+
+@keyframes pulse-aura {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(3.5); opacity: 0; }
+}
+
+.weather-marker-temp {
+  background: linear-gradient(135deg, #5c6bc0, #26418f);
   color: white;
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 16px;
+  margin-top: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
 }
-.leaflet-popup-tip {
-  background: rgba(20, 20, 30, 0.9);
+
+/* Radar Animation */
+.radar-active-glow {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 255, 180, 0.1);
+  border: 1px solid rgba(0, 255, 180, 0.3);
+  padding: 8px 15px;
+  border-radius: 100px;
+  color: #00ffb4;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
+
+.radar-dot {
+  width: 8px;
+  height: 8px;
+  background: #00ffb4;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #00ffb4;
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+

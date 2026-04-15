@@ -23,3 +23,4 @@ git commit -m "Deploy to Vercel"
 git push origin main
 ```
 Vercel aggiornerà automaticamente sia il sito che le API!
+- Riavviare il server con 'npm run dev:server' per applicare la rimozione dei dati fake e testare la visualizzazione pulita dei soli dati reali.

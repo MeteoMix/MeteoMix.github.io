@@ -45,32 +45,10 @@ async function fetchWithRetry(url, retries = 2) {
 
 function parseConditionFromText(text) {
     const t = (text || '').toLowerCase();
-    if (t.match(/pioggia|piove|temporale|rovesci|acquazzone/)) return 'Rainy';
-    if (t.match(/nuvol|coperto|nebbia/)) return 'Cloudy';
-    if (t.match(/sereno|sole|limpido/)) return 'Sunny';
+    if (t.match(/pioggia|piove|temporale|rovesci|acquazzone|rain|shower|storm/)) return 'Rainy';
+    if (t.match(/nuvol|coperto|nebbia|cloud|overcast|fog/)) return 'Cloudy';
+    if (t.match(/sereno|sole|limpido|sun|clear|fair/)) return 'Sunny';
     return 'Cloudy';
-}
-
-async function getBaselineWeather(cityRaw) {
-    try {
-        const geoData = await fetchWithRetry(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityRaw)}&count=1&language=it`, 2);
-        if (!geoData.results || geoData.results.length === 0) return null;
-        
-        const { latitude, longitude } = geoData.results[0];
-        const weatherData = await fetchWithRetry(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`, 2);
-        
-        const currentTemp = Math.round(weatherData.current_weather.temperature);
-        const code = weatherData.current_weather.weathercode;
-        
-        let condition = 'Sunny';
-        if (code >= 1 && code <= 3) condition = 'Cloudy';
-        if (code >= 50) condition = 'Rainy';
-        
-        return { temp: currentTemp, condition };
-    } catch (e) {
-        console.warn("[BASELINE ERROR] Impossibile recuperare il paracadute Open-Meteo:", e.message);
-        return null;
-    }
 }
 
 async function fetchWithCurl(url) {
@@ -82,9 +60,9 @@ async function fetchWithCurl(url) {
     }
 }
 
-// --- SCRAPING STRATEGIES ---
+// --- 3. SCRAPING STRATEGIES ---
 
-async function scrapeIlMeteo(cityRaw, baseline) {
+async function scrapeIlMeteo(cityRaw) {
     const url = `https://www.ilmeteo.it/meteo/${encodeURIComponent(cityRaw.trim().replace(/\s+/g, '-'))}`;
     try {
         const html = await fetchWithRetry(url, 2);
@@ -100,68 +78,86 @@ async function scrapeIlMeteo(cityRaw, baseline) {
         if (temp === null) throw new Error("Temp not found");
         return { name: 'iLMeteo.it', url, prediction: { temp, condition: parseConditionFromText(desc), description: 'Scraping nativo' } };
     } catch (err) {
-        if (!baseline) throw err;
-        return { name: 'iLMeteo.it', url, prediction: { temp: baseline.temp - 1, condition: baseline.condition, description: 'Ottimizzazione fallback' } };
+        throw err;
     }
 }
 
-async function scrape3BMeteo(cityRaw, baseline) {
-    const url = `https://www.3bmeteo.com/meteo/${encodeURIComponent(cityRaw.trim().replace(/\s+/g, '-'))}`;
+async function scrapeWttr(cityRaw) {
+    const url = `https://wttr.in/${encodeURIComponent(cityRaw.trim())}?format=j1`;
     try {
-        const html = await fetchWithCurl(url);
-        let temp = null;
-        let descStr = baseline?.condition || 'Cloudy';
-        const tMatch = html.match(/'tattuale':\s*'(-?\d+)'/);
-        if (tMatch) temp = parseInt(tMatch[1], 10);
-        const condMatch = html.match(/'3bm_tempo':\s*'([^']+)'/);
-        if (condMatch) descStr = parseConditionFromText(condMatch[1]) || 'Cloudy';
-        if (temp === null || isNaN(temp)) throw new Error("Temp not found in 3BMeteo HTML");
-        return { name: '3BMeteo', url, prediction: { temp, condition: descStr, description: 'Scraping diretto bypass TLS' } };
+        const jsonStr = await fetchWithCurl(url);
+        const data = JSON.parse(jsonStr);
+        const temp = parseInt(data.current_condition[0].temp_C, 10);
+        const descObj = data.current_condition[0].weatherDesc[0].value;
+        if (isNaN(temp)) throw new Error("Temp not found");
+        return { name: 'Wttr.in (WorldWeather)', url: `https://wttr.in/${encodeURIComponent(cityRaw.trim())}`, prediction: { temp, condition: parseConditionFromText(descObj), description: 'Dati JSON in tempo reale' } };
     } catch (err) {
-        if (!baseline) throw err;
-        return { name: '3BMeteo', url, prediction: { temp: baseline.temp + 1, condition: baseline.condition, description: 'Stabilizzato da server' } };
+        throw err;
     }
 }
 
-async function scrapeMeteoBlue(cityRaw, baseline) {
-    let targetUrl = `https://www.meteoblue.com/it/tempo/settimana/${encodeURIComponent(cityRaw.trim().toLowerCase())}`;
+async function getCoordinates(cityRaw) {
     try {
-        const searchUrl = `https://www.meteoblue.com/it/server/search/query3?query=${encodeURIComponent(cityRaw)}`;
-        const searchJsonRaw = await fetchWithCurl(searchUrl);
-        const searchJson = JSON.parse(searchJsonRaw);
-        if (searchJson?.results?.length > 0) targetUrl = 'https://www.meteoblue.com' + searchJson.results[0].url;
-        const html = await fetchWithCurl(targetUrl);
-        const $ = cheerio.load(html);
-        let temp = null;
-        const tempText = $('.current-temp').text();
-        if (tempText) {
-             const parsed = parseInt(tempText.replace(/[^\d-]/g, ''), 10);
-             if (!isNaN(parsed)) temp = parsed;
-        }
-        if (temp === null) throw new Error("Temp not found");
-        return { name: 'meteoblue', url: targetUrl, prediction: { temp, condition: baseline?.condition || 'Sunny', description: 'Scraping reale completato' } };
-    } catch (err) {
-        if (!baseline) throw err;
-        return { name: 'meteoblue', url: targetUrl, prediction: { temp: baseline.temp, condition: baseline.condition, description: 'Dato approssimato' } };
+        const geoData = await fetchWithRetry(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityRaw)}&count=1&language=it`, 2);
+        if (!geoData.results || geoData.results.length === 0) throw new Error("Coordinate non trovate");
+        return geoData.results[0]; // { latitude, longitude }
+    } catch(err) {
+        throw new Error("Errore geocoding: " + err.message);
     }
 }
 
-async function scrapeMeteoAM(cityRaw, baseline) {
-    const url = `https://www.meteoam.it/it/meteo-citta/${encodeURIComponent(cityRaw.trim().toLowerCase().replace(/\s+/g, '-'))}`;
+async function scrapeYrNo(cityRaw) {
+    try {
+        const coords = await getCoordinates(cityRaw);
+        // Yr.no api needs a custom user-agent!
+        const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${coords.latitude}&lon=${coords.longitude}`;
+        const jsonStr = await fetchWithCurl(url);
+        const data = JSON.parse(jsonStr);
+        const temp = Math.round(data.properties.timeseries[0].data.instant.details.air_temperature);
+        const symbol = data.properties.timeseries[0].data.next_1_hours?.summary?.symbol_code || data.properties.timeseries[0].data.next_6_hours?.summary?.symbol_code || 'cloudy';
+        return { name: 'Yr.no (MET Norway)', url: `https://www.yr.no/en/forecast/daily-table/${coords.latitude},${coords.longitude}`, prediction: { temp, condition: parseConditionFromText(symbol), description: 'Dati scientifici ad alta precisione' } };
+    } catch(err) {
+        console.warn(`[SCRAPE FAIL] Yr.no per ${cityRaw}:`, err.message);
+        throw err;
+    }
+}
+
+async function scrape7Timer(cityRaw) {
+    try {
+        const coords = await getCoordinates(cityRaw);
+        const url = `http://www.7timer.info/bin/api.pl?lon=${coords.longitude}&lat=${coords.latitude}&product=civil&output=json`;
+        const jsonStr = await fetchWithCurl(url);
+        const data = JSON.parse(jsonStr);
+        const temp = data.dataseries[0].temp2m;
+        const weatherObj = data.dataseries[0].weather;
+        return { name: '7Timer! (NOAA)', url: `http://www.7timer.info/`, prediction: { temp, condition: parseConditionFromText(weatherObj), description: 'Modello numerico GFS' } };
+    } catch(err) {
+        console.warn(`[SCRAPE FAIL] 7Timer per ${cityRaw}:`, err.message);
+        throw err;
+    }
+}
+
+async function scrapeMeteoGiuliacci(cityRaw) {
+    const url = `https://www.meteogiuliacci.it/meteo/${encodeURIComponent(cityRaw.trim().toLowerCase().replace(/\s+/g, '-'))}`;
     try {
         const html = await fetchWithRetry(url, 2);
         const $ = cheerio.load(html);
         let temp = null;
-        let desc = $('meta[name="description"]').attr('content') || $('title').text() || '';
-        const ht = $('div.temperature span.value').first().text() || $('td.temp').first().text();
-        const tMatch = ht.match(/(\d+)/) || desc.match(/Temperatura:\s*(\d+)/i) || desc.match(/(\d+)\s*°C/);
-        if (tMatch) temp = parseInt(tMatch[1], 10);
+        let desc = $('meta[name="description"]').attr('content') || '';
+        
+        const ht = $('.hot-temp').first().text().replace(/[^\d]/g, '');
+        if (ht) temp = parseInt(ht, 10);
+        
         if (temp === null) throw new Error("Temp not found");
-        return { name: 'MeteoAM (Aeronautica)', url, prediction: { temp, condition: parseConditionFromText(desc), description: 'Scraping Nodo Istituzionale' } };
+        return { name: 'MeteoGiuliacci', url, prediction: { temp, condition: parseConditionFromText(desc), description: 'Scraping nativo' } };
     } catch (err) {
-        if (!baseline) throw err;
-        return { name: 'MeteoAM (Aeronautica)', url, prediction: { temp: baseline.temp - 2, condition: baseline.condition, description: 'Ricavato in assenza di rendering SPA' } };
+        throw err;
     }
+}
+
+// Rimosso MeteoAM che falliva frequentemente
+async function scrapeMeteoAM(cityRaw) {
+    throw new Error("Deprecato per inaffidabilità SPA");
 }
 
 // --- Handler (Vercel Serverless Function) ---
@@ -189,13 +185,12 @@ export default async function handler(req, res) {
      }
   }
 
-  const baseline = await getBaselineWeather(normalizedCity);
-  
   const results = await Promise.allSettled([
-      scrapeIlMeteo(rawCity, baseline),
-      scrape3BMeteo(rawCity, baseline),
-      scrapeMeteoBlue(rawCity, baseline),
-      scrapeMeteoAM(rawCity, baseline)
+      scrapeIlMeteo(rawCity),
+      scrapeWttr(rawCity),
+      scrapeMeteoGiuliacci(rawCity),
+      scrapeYrNo(rawCity),
+      scrape7Timer(rawCity)
   ]);
   
   const successfulForecasts = results

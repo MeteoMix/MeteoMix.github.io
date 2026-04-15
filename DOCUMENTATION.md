@@ -46,3 +46,41 @@
   - *Details*: Resolved Cloudflare bot protection on 3BMeteo and Meteoblue preventing real data collection.
   - *Tech Notes*: Implemented `fetchWithCurl` using `child_process.exec` to bypass Node's `axios` TLS fingerprinting which was actively triggering 403 Forbidden on targeted websites. Extracted 3bMeteo real current temp from embedded Javascript config object `pubAdsCfg` stealthily. Evaluated MeteoAM, retaining it as Fallback-only due to SPA architecture limitations in Node.js environments.
 
+- [2026-04-15 22:25:21]: Scraping Integrity Update
+  - *Details*: Eliminated all fallback mechanisms and generated fake data. The application now displays only real, successfully scraped weather data.
+  - *Tech Notes*: Removed `getBaselineWeather` and related logic from `server.js` and `api/scrape.js`. Refactored `Result.tsx` to discard local fake data variations if the proxy is unreachable. This ensures the 5-card count is no longer fixed, and users only see authenticated results from providers.
+
+
+- [2026-04-15 22:35:00]: Professional Map Upgrade (Modern Graphics & Radar)
+  - *Details*: La mappa interattiva è stata completamente riprogettata per offrire un'esperienza visiva professionale e moderna. Ora utilizza dati reali di posizionamento e integra un radar meteorologico in tempo reale.
+  - *Tech Notes*:
+    - **RainViewer Integration**: Aggiunto layer radar dinamico che recupera l'ultimo timestamp disponibile dalle API di RainViewer per mostrare precipitazioni reali sulla mappa.
+    - **Professional Styling**: Implementato tema "Dark Matter" di CartoDB con filtri CSS personalizzati (contrast/brightness) per un look "High-Tech".
+    - **Animated Markers**: Sostituiti i marker standard con "Pulse Markers" (SVG/CSS) che creano un effetto di propagazione concentrica sul punto cercato.
+    - **Dynamic Interaction**: La mappa ora riceve coordinate reali (lat/lon) dal geocoding e la temperatura media calcolata, aggiornando il popup con icone meteo animate (Sole, Nuvole, Pioggia) in base alla condizione rilevata.
+    - **Smooth Transitions**: Aggiunto MapUpdater per gestire spostamenti di camera fluidi (smooth pan/zoom) tra diverse città.
+
+- [2026-04-15 22:34:00]: Immersive Weather Dashboard Upgrade (WOW Factor)
+  - *Details*: Risolti i glitch grafici del radar e implementata un'interfaccia "Immersive Dashboard" che trasforma la mappa in una console di controllo professionale.
+  - *Tech Notes*:
+    - **Cinematic Camera**: Introdotta logica flyTo con easing personalizzato per un ingresso scenografico sulla città cercata.
+    - **Floating UI Overlay**: Aggiunta una card in glassmorphism sospesa sulla mappa con icone Lucide-React e gradienti premium per i dettagli meteo.
+    - **Radar Fix**: Cappato il maxZoom a 12 per evitare il caricamento di tile inesistenti di RainViewer (bug "Zoom level not supported").
+    - **Neon Visual Processing**: Filtri SVG/CSS avanzati applicati al Map Pane per un look desaturato/tech più leggibile e moderno.
+    - **Interactive Controls**: Aggiunto toggle interattivo per attivare/disattivare il radar in real-time.
+- [2026-04-15 22:35:05]: Provider Replacement for Maximum Coverage
+  - *Details*: Sostituiti 3BMeteo e MeteoBlue (siti con pesanti blocchi Cloudflare) con Wttr.in e MeteoGiuliacci.
+  - *Tech Notes*: Modificati `api/scrape.js` e `server.js` aggiungendo `scrapeWttr` (accesso in JSON reale via API curl) e `scrapeMeteoGiuliacci` (scraping nativo affidabile). Questo innalza radicalmente l'affidabilità garantendo l'assenza di blocchi e il riempimento di almeno 4 card assicurate (Open-Meteo, iLMeteo, Wttr, MeteoGiuliacci).
+
+- [2026-04-15 22:38:13]: Expanded Weather Data Sources
+  - *Details*: Aggiunti nuovi provider georeferenziati e rimossi provider instabili (MeteoAM). Vengono ora scaricate fino a 6 fonti ufficiali diverse.
+  - *Tech Notes*: Sfruttata l'API di geocodifica (Open-Meteo Geocoding) per mappare la città richiesta a coordinate esatte (lat/lon). Integrato `Yr.no` (API ufficiale norvegese, standard meteorologico europeo) e `7Timer!` (modello GFS raw). Entrambi lavorano in puro JSON senza necessitare di API keys. Questa architettura mista HTML/API garantisce a MeteoMix un'assoluta robustezza e grandissima affidabilità della media finale.
+
+
+- [2026-04-15 22:38:00]: Aggiustamento Luminosità Mappa
+  - *Details*: Regolati i filtri grafici (brightness, contrast, saturate) della mappa per renderla più chiara e leggibile, mantenendo comunque uno stile premium e moderno.
+  - *Tech Notes*: Modificata la funzione `applyFilters` in `WeatherMap.tsx` applicando `brightness(1.4) contrast(1.1) saturate(1.3)` invece dei valori scuri precedenti.
+
+- [2026-04-15 22:39:00]: Miglioria Leggibilità Mappa e Nascondimento Radar
+  - *Details*: La luminosità della mappa è stata spinta al massimo per una totale visibilità delle strade. Il layer radar è ora nascosto di default per non sporcare la visuale iniziale.
+  - *Tech Notes*: `brightness` portata a `2.5`. Stato iniziale di `showRadar` impostato a `false` in `WeatherMap.tsx`.
