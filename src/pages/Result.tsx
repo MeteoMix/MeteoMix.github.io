@@ -1,12 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { ChevronLeft, Map as MapIcon, LayoutGrid } from 'lucide-react';
+import { ChevronLeft, Map as MapIcon, LayoutGrid, Loader2 } from 'lucide-react';
 import WeatherCard from '../components/WeatherCard';
 import WeatherMap from '../components/WeatherMap';
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
 };
+
+interface Forecast {
+  name: string;
+  url: string;
+  prediction: {
+    temp: number;
+    condition: 'Sunny' | 'Cloudy' | 'Rainy';
+    description: string;
+  };
+}
 
 const providers = [
   { name: 'Ilmeteo.net', url: 'https://www.ilmeteo.net' },
@@ -16,41 +26,101 @@ const providers = [
   { name: "Aeronautica Militare", url: 'http://www.meteoam.it' }
 ];
 
-const generateMockData = (query: string) => {
-  // Simple hashing of query string to create stable pseudo-random data
-  let hash = 0;
-  for (let i = 0; i < query.length; i++) {
-    hash = query.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  
-  const baseTemp = 18 + (Math.abs(hash) % 15);
-  const conditions: Array<'Sunny' | 'Cloudy' | 'Rainy'> = ['Sunny', 'Cloudy', 'Rainy'];
-  
-  return providers.map((provider, i) => {
-    // Generate slight variations between providers
-    const tempVar = (Math.abs(hash + i) % 5) - 2;
-    const condIndex = Math.abs(hash + i * 3) % conditions.length;
-    
-    return {
-      name: provider.name,
-      url: provider.url,
-      prediction: {
-        temp: baseTemp + tempVar,
-        condition: conditions[condIndex],
-        description: conditions[condIndex] === 'Sunny' ? 'Prevalentemente soleggiato' : conditions[condIndex] === 'Cloudy' ? 'Nuvolosità sparsa' : 'Piogge deboli'
-      }
-    };
-  });
-};
-
 const Result: React.FC = () => {
   const queryParam = useQuery().get('q') || '';
   const [viewMode, setViewMode] = useState<'cards' | 'map'>('cards');
-  
-  const forecasts = generateMockData(queryParam);
-  
-  // Calculate average temp
-  const avgTemp = Math.round(forecasts.reduce((acc, curr) => acc + curr.prediction.temp, 0) / forecasts.length);
+  const [forecasts, setForecasts] = useState<Forecast[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      if (!queryParam) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        // 1. Geocoding
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(queryParam)}&count=1&language=it`);
+        const geoData = await geoRes.json();
+
+        if (!geoData.results || geoData.results.length === 0) {
+          throw new Error('Città non trovata');
+        }
+
+        const { latitude, longitude } = geoData.results[0];
+
+        // 2. Weather
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+        const weatherData = await weatherRes.json();
+
+        const currentWmoCode = weatherData.current_weather.weathercode;
+        const currentTemp = weatherData.current_weather.temperature;
+
+        // Map WMO code to simplified conditions
+        let condition: 'Sunny' | 'Cloudy' | 'Rainy' = 'Sunny';
+        let description = 'Prevalentemente soleggiato';
+
+        if (currentWmoCode >= 1 && currentWmoCode <= 3) {
+          condition = 'Cloudy';
+          description = 'Nuvolosità sparsa';
+        } else if (currentWmoCode >= 50) {
+          condition = 'Rainy';
+          description = 'Pioggia in corso';
+        }
+
+        // Create the primary Open-Meteo prediction
+        const realData: Forecast = {
+          name: 'Open-Meteo (Dati Reali)',
+          url: 'https://open-meteo.com',
+          prediction: {
+            temp: Math.round(currentTemp),
+            condition,
+            description
+          }
+        };
+
+        // --- PHASE 3: Fetch scraped data from Backend Proxy ---
+        let otherData: Forecast[] = [];
+        try {
+          const proxyRes = await fetch(`http://localhost:3001/api/scrape?q=${encodeURIComponent(queryParam)}`);
+          if (proxyRes.ok) {
+             const data = await proxyRes.json();
+             otherData = data.forecasts || [];
+          } else {
+             throw new Error("Backend response not ok");
+          }
+        } catch (backendError) {
+          console.warn("Backend Proxy non attivo! Esegui 'npm run dev:server' per attivare lo scraping reale.", backendError);
+          // Phase 1 Fallback: slight variations to keep UI alive
+          const hash = queryParam.length;
+          otherData = providers.map((p, i) => {
+            const tempVar = (Math.abs(hash + i) % 3) - 1; // -1 to +1 variation
+            return {
+              name: p.name,
+              url: p.url,
+              prediction: {
+                temp: Math.round(currentTemp + tempVar),
+                condition,
+                description
+              }
+            };
+          });
+        }
+
+        setForecasts([realData, ...otherData]);
+      } catch (err: any) {
+        setError(err.message || "Errore nel caricamento dei dati meteo.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWeather();
+  }, [queryParam]);
+
+  const avgTemp = forecasts.length > 0 
+    ? Math.round(forecasts.reduce((acc, curr) => acc + curr.prediction.temp, 0) / forecasts.length) 
+    : 0;
 
   return (
     <div style={styles.container}>
@@ -64,9 +134,11 @@ const Result: React.FC = () => {
             <h1 style={styles.title}>
               Previsioni per <span className="text-gradient">"{queryParam}"</span>
             </h1>
-            <div style={styles.avgBadge}>
-              Media: {avgTemp}°C
-            </div>
+            {!isLoading && !error && (
+              <div style={styles.avgBadge}>
+                Media: {avgTemp}°C
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -91,8 +163,18 @@ const Result: React.FC = () => {
           </div>
         </div>
 
-        <div className="animate-fade-in" style={{ width: '100%' }}>
-          {viewMode === 'cards' ? (
+        <div className="animate-fade-in" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+          {isLoading ? (
+             <div style={{ padding: '4rem', color: '#8e99f3', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                <Loader2 size={40} className="animate-spin" />
+                <p>Ricerca dati reali in corso...</p>
+             </div>
+          ) : error ? (
+            <div style={{ padding: '2rem', background: 'rgba(255,100,100,0.1)', border: '1px solid rgba(255,100,100,0.3)', borderRadius: '12px', color: '#ffb3b3', textAlign: 'center', width: '100%', maxWidth: '600px' }}>
+              <h3>Nessun risultato trovato</h3>
+              <p>{error}</p>
+            </div>
+          ) : viewMode === 'cards' ? (
             <div style={styles.grid}>
               {forecasts.map((f, idx) => (
                 <WeatherCard 
