@@ -1,73 +1,42 @@
-# React + TypeScript + Vite
+# MeteoMix 🌤️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**MeteoMix** è una piattaforma web moderna e professionale progettata per offrire una visione aggregata delle previsioni meteo in Italia. 
 
-Currently, two official plugins are available:
+Il progetto analizza i dati dai principali siti meteorologici italiani (Ilmeteo.net, 3BMeteo, iLMeteo.it, Meteo.it e Aeronautica Militare) e ne calcola la media per fornire una stima più accurata possibile.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Caratteristiche principali
 
-## React Compiler
+-   **Interfaccia Premium**: Design moderno con glassmorphism, dark mode e animazioni fluide.
+-   **Ricerca Intelligente**: Cerca rapidamente per città o regione.
+-   **Doppia Visualizzazione**:
+    -   **Card View**: Confronta le previsioni di ogni singolo fornitore.
+    -   **Map View**: Visualizza la situazione sulla mappa interattiva.
+-   **Media delle previsioni**: Calcolo della temperatura media dai vari fornitori per una maggiore affidabilità.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tecnologie utilizzate
 
-## Expanding the ESLint configuration
+-   **Core**: React 19 + TypeScript
+-   **Bundler**: Vite
+-   **Routing**: React Router
+-   **Mappa**: React Leaflet / Leaflet.js
+-   **Icone**: Lucide React
+-   **Styling**: Vanilla CSS con design system personalizzato
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Come iniziare
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1.  Clona la repository:
+    ```bash
+    git clone https://github.com/MeteoMix/MeteoMix.github.io.git
+    ```
+2.  Installa le dipendenze:
+    ```bash
+    npm install
+    ```
+3.  Avvia in modalità sviluppo:
+    ```bash
+    npm run dev
+    ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Progetto creato con ❤️ per una visione più chiara del meteo italiano.
