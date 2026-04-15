@@ -84,3 +84,17 @@
 - [2026-04-15 22:39:00]: Miglioria Leggibilità Mappa e Nascondimento Radar
   - *Details*: La luminosità della mappa è stata spinta al massimo per una totale visibilità delle strade. Il layer radar è ora nascosto di default per non sporcare la visuale iniziale.
   - *Tech Notes*: `brightness` portata a `2.5`. Stato iniziale di `showRadar` impostato a `false` in `WeatherMap.tsx`.
+- [2026-04-15 22:43:32]: Human-Readable Descriptions Update
+  - *Details*: Sostituite le descrizioni tecniche delle card (es. 'Scraping nativo') con termini meteorologici in italiano ('Soleggiato', 'Nuvoloso', 'Piovoso').
+  - *Tech Notes*: Implementata la funzione helper `translateCondition` in `server.js` e `api/scrape.js` per mappare le condizioni interne ai termini visualizzabili dall'utente.
+
+- [2026-04-15 22:44:00]: Aggiunta KPI Meteo Avanzati in Mappa
+  - *Details*: Per rendere la mappa realmente utile e informativa, è stata integrata una griglia contenente KPI meteorologici avanzati. Ora è possibile visualizzare a colpo d'occhio Velocità del Vento, Umidità, Probabilità di Precipitazione e Temperature Max/Min.
+  - *Tech Notes*: Modificato `Result.tsx` per estrarre extra parametri dall'API di Open-Meteo (`current=relative_humidity_2m,precipitation` e `daily=temperature_2m_max,temperature_2m_min`). Tali dati vengono passati via props a `WeatherMap.tsx` e renderizzati in un CSS grid layout semitrasparente tramite le icone di `lucide-react`.
+- [2026-04-15 22:45:52]: Premium Loading Experience (Satellite Scanner)
+  - *Details*: Sostituito lo spinner di caricamento standard con un'animazione 'WOW' a tema spaziale/satellitare.
+  - *Tech Notes*:
+    - **Scanning Animation**: Implementati ring concentrici animati in CSS che ruotano a velocità diverse per simulare una scansione radar.
+    - **Dynamic Status Messages**: Aggiunto un ciclo di messaggi di stato (es. 'Interrogazione modelli GFS...', 'Sincronizzazione radar...') per intrattenere l'utente durante l'attesa.
+    - **Pulse Effects**: Applicati effetti di pulsazione soft e floating icon per un look dinamico e professionale.
+

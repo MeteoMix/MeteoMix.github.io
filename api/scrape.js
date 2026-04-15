@@ -51,6 +51,15 @@ function parseConditionFromText(text) {
     return 'Cloudy';
 }
 
+function translateCondition(condition) {
+    switch(condition) {
+        case 'Sunny': return 'Soleggiato';
+        case 'Cloudy': return 'Nuvoloso';
+        case 'Rainy': return 'Piovoso';
+        default: return 'Nuvoloso';
+    }
+}
+
 async function fetchWithCurl(url) {
     try {
         const { stdout } = await execAsync(`curl -s -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36" -m 10 "${url}"`);
@@ -76,7 +85,8 @@ async function scrapeIlMeteo(cityRaw) {
            if (ht) temp = parseInt(ht, 10);
         }
         if (temp === null) throw new Error("Temp not found");
-        return { name: 'iLMeteo.it', url, prediction: { temp, condition: parseConditionFromText(desc), description: 'Scraping nativo' } };
+        const cond = parseConditionFromText(desc);
+        return { name: 'iLMeteo.it', url, prediction: { temp, condition: cond, description: translateCondition(cond) } };
     } catch (err) {
         throw err;
     }
@@ -90,7 +100,8 @@ async function scrapeWttr(cityRaw) {
         const temp = parseInt(data.current_condition[0].temp_C, 10);
         const descObj = data.current_condition[0].weatherDesc[0].value;
         if (isNaN(temp)) throw new Error("Temp not found");
-        return { name: 'Wttr.in (WorldWeather)', url: `https://wttr.in/${encodeURIComponent(cityRaw.trim())}`, prediction: { temp, condition: parseConditionFromText(descObj), description: 'Dati JSON in tempo reale' } };
+        const cond = parseConditionFromText(descObj);
+        return { name: 'Wttr.in (WorldWeather)', url: `https://wttr.in/${encodeURIComponent(cityRaw.trim())}`, prediction: { temp, condition: cond, description: translateCondition(cond) } };
     } catch (err) {
         throw err;
     }
@@ -115,7 +126,8 @@ async function scrapeYrNo(cityRaw) {
         const data = JSON.parse(jsonStr);
         const temp = Math.round(data.properties.timeseries[0].data.instant.details.air_temperature);
         const symbol = data.properties.timeseries[0].data.next_1_hours?.summary?.symbol_code || data.properties.timeseries[0].data.next_6_hours?.summary?.symbol_code || 'cloudy';
-        return { name: 'Yr.no (MET Norway)', url: `https://www.yr.no/en/forecast/daily-table/${coords.latitude},${coords.longitude}`, prediction: { temp, condition: parseConditionFromText(symbol), description: 'Dati scientifici ad alta precisione' } };
+        const cond = parseConditionFromText(symbol);
+        return { name: 'Yr.no (MET Norway)', url: `https://www.yr.no/en/forecast/daily-table/${coords.latitude},${coords.longitude}`, prediction: { temp, condition: cond, description: translateCondition(cond) } };
     } catch(err) {
         console.warn(`[SCRAPE FAIL] Yr.no per ${cityRaw}:`, err.message);
         throw err;
@@ -130,7 +142,8 @@ async function scrape7Timer(cityRaw) {
         const data = JSON.parse(jsonStr);
         const temp = data.dataseries[0].temp2m;
         const weatherObj = data.dataseries[0].weather;
-        return { name: '7Timer! (NOAA)', url: `http://www.7timer.info/`, prediction: { temp, condition: parseConditionFromText(weatherObj), description: 'Modello numerico GFS' } };
+        const cond = parseConditionFromText(weatherObj);
+        return { name: '7Timer! (NOAA)', url: `http://www.7timer.info/`, prediction: { temp, condition: cond, description: translateCondition(cond) } };
     } catch(err) {
         console.warn(`[SCRAPE FAIL] 7Timer per ${cityRaw}:`, err.message);
         throw err;
@@ -149,7 +162,8 @@ async function scrapeMeteoGiuliacci(cityRaw) {
         if (ht) temp = parseInt(ht, 10);
         
         if (temp === null) throw new Error("Temp not found");
-        return { name: 'MeteoGiuliacci', url, prediction: { temp, condition: parseConditionFromText(desc), description: 'Scraping nativo' } };
+        const cond = parseConditionFromText(desc);
+        return { name: 'MeteoGiuliacci', url, prediction: { temp, condition: cond, description: translateCondition(cond) } };
     } catch (err) {
         throw err;
     }

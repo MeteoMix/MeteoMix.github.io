@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Cloud, Sun, CloudRain, Navigation, Map as MapIcon, Layers } from 'lucide-react';
+import { Cloud, Sun, CloudRain, Navigation, Map as MapIcon, Layers, Wind, Droplets, ThermometerSun } from 'lucide-react';
 
 interface WeatherMapProps {
   locationQuery: string;
@@ -10,6 +10,13 @@ interface WeatherMapProps {
   lon?: number;
   avgTemp?: number;
   currentCondition?: string;
+  extraData?: {
+    windSpeed: number | string;
+    humidity: number | string;
+    precipitation: number | string;
+    high: number | string;
+    low: number | string;
+  };
 }
 
 // Cinematic Map Transitions
@@ -53,7 +60,7 @@ const neonPulseIcon = new L.DivIcon({
   iconAnchor: [12, 12]
 });
 
-const WeatherMap: React.FC<WeatherMapProps> = ({ locationQuery, lat, lon, avgTemp, currentCondition }) => {
+const WeatherMap: React.FC<WeatherMapProps> = ({ locationQuery, lat, lon, avgTemp, currentCondition, extraData }) => {
   const [center, setCenter] = useState<[number, number]>([41.8719, 12.5674]);
   const [zoom, setZoom] = useState(10);
   const [radarTimestamp, setRadarTimestamp] = useState<number | null>(null);
@@ -110,6 +117,42 @@ const WeatherMap: React.FC<WeatherMapProps> = ({ locationQuery, lat, lon, avgTem
             <p style={styles.conditionText}>{currentCondition || "N/A"}</p>
           </div>
         </div>
+
+        {extraData && (
+          <div style={styles.statsGrid}>
+            <div style={styles.statBox}>
+              <Wind size={16} color="#8e99f3" />
+              <div style={styles.statInfo}>
+                <span style={styles.statLabel}>Vento</span>
+                <strong style={styles.statValue}>{extraData.windSpeed} km/h</strong>
+              </div>
+            </div>
+            
+            <div style={styles.statBox}>
+              <Droplets size={16} color="#8e99f3" />
+              <div style={styles.statInfo}>
+                <span style={styles.statLabel}>Umidità</span>
+                <strong style={styles.statValue}>{extraData.humidity}%</strong>
+              </div>
+            </div>
+
+            <div style={styles.statBox}>
+              <CloudRain size={16} color="#8e99f3" />
+              <div style={styles.statInfo}>
+                <span style={styles.statLabel}>Pioggia</span>
+                <strong style={styles.statValue}>{extraData.precipitation} mm</strong>
+              </div>
+            </div>
+
+            <div style={styles.statBox}>
+              <ThermometerSun size={16} color="#8e99f3" />
+              <div style={styles.statInfo}>
+                <span style={styles.statLabel}>Max / Min</span>
+                <strong style={styles.statValue}>{extraData.high}° / {extraData.low}°</strong>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div style={styles.cardFooter}>
           <div 
@@ -228,6 +271,37 @@ const styles = {
     color: '#c5c6c7',
     margin: 0,
     fontWeight: 500,
+  },
+  statsGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '12px',
+    marginBottom: '20px',
+    padding: '15px',
+    background: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: '16px',
+    border: '1px solid rgba(255,255,255,0.05)',
+  },
+  statBox: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  statInfo: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+  },
+  statLabel: {
+    fontSize: '0.65rem',
+    color: '#8e99f3',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.5px',
+    fontWeight: 600,
+  },
+  statValue: {
+    fontSize: '0.85rem',
+    color: 'white',
+    fontWeight: 700,
   },
   cardFooter: {
     borderTop: '1px solid rgba(255,255,255,0.1)',
