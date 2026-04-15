@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { ChevronLeft, Map as MapIcon, LayoutGrid, Loader2, CloudLightning } from 'lucide-react';
+import { ChevronLeft, Map as MapIcon, LayoutGrid, CloudLightning } from 'lucide-react';
 import WeatherCard from '../components/WeatherCard';
 import WeatherMap from '../components/WeatherMap';
 import './Result.css';

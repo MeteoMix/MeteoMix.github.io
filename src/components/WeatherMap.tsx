@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Cloud, Sun, CloudRain, Navigation, Map as MapIcon, Layers, Wind, Droplets, ThermometerSun } from 'lucide-react';
+import { Cloud, Sun, CloudRain, Navigation, Layers, Wind, Droplets, ThermometerSun } from 'lucide-react';
 import './WeatherMap.css';
 
 interface WeatherMapProps {
@@ -48,8 +48,8 @@ const neonPulseIcon = new L.DivIcon({
 
 const WeatherMap: React.FC<WeatherMapProps> = ({ locationQuery, lat, lon, avgTemp, currentCondition, extraData }) => {
   const [center, setCenter] = useState<[number, number]>([41.8719, 12.5674]);
-  const [zoom, setZoom] = useState(10);
-  const [radarTimestamp, setRadarTimestamp] = useState<number | null>(null);
+  const [zoom] = useState(6);
+  const [radarPath, setRadarPath] = useState<string | null>(null);
   const [showRadar, setShowRadar] = useState(false);
 
   useEffect(() => {
@@ -64,9 +64,9 @@ const WeatherMap: React.FC<WeatherMapProps> = ({ locationQuery, lat, lon, avgTem
         const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
         const data = await res.json();
         if (data.radar?.past?.length > 0) {
-          const latest = data.radar.past[data.radar.past.length - 1].time;
-          setRadarTimestamp(latest);
-          console.log(`[RADAR] Layer sincronizzato con timestamp: ${latest}`);
+          const latest = data.radar.past[data.radar.past.length - 1];
+          setRadarPath(latest.path);
+          console.log(`[RADAR] Layer sincronizzato con path: ${latest.path}`);
         }
       } catch (err) {
         console.warn('Radar offline:', err);
@@ -135,7 +135,7 @@ const WeatherMap: React.FC<WeatherMapProps> = ({ locationQuery, lat, lon, avgTem
             <div className="map-stat-box">
               <ThermometerSun size={16} color="#8e99f3" />
               <div className="map-stat-info">
-                <span className="map-stat-label">Max / Min</span>
+                <span className="map-stat-label">Max / Min:</span>
                 <strong className="map-stat-value">{extraData.high}° / {extraData.low}°</strong>
               </div>
             </div>
@@ -154,7 +154,7 @@ const WeatherMap: React.FC<WeatherMapProps> = ({ locationQuery, lat, lon, avgTem
         </div>
       </div>
 
-      {showRadar && radarTimestamp && (
+      {showRadar && radarPath && (
         <div className="radar-active-glow">
           <div className="radar-dot"></div>
           Precipitazioni Real-Time
@@ -175,11 +175,11 @@ const WeatherMap: React.FC<WeatherMapProps> = ({ locationQuery, lat, lon, avgTem
           attribution='&copy; CARTO'
         />
 
-        {showRadar && radarTimestamp && (
+        {showRadar && radarPath && (
           <TileLayer
-            key={radarTimestamp}
+            key={radarPath}
             className="radar-layer"
-            url={`https://tilecache.rainviewer.com/v2/radar/${radarTimestamp}/256/{z}/{x}/{y}/4/1_1.png`}
+            url={`https://tilecache.rainviewer.com${radarPath}/256/{z}/{x}/{y}/4/1_1.png`}
             opacity={1}
             zIndex={400}
             maxNativeZoom={12}

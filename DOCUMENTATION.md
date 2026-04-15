@@ -113,3 +113,7 @@
     - Simplified search interface on mobile (vertical stack).
     - Reduced typography scales for mobile viewports.
     - Added media queries to `index.css` for global responsive utilities.
+
+- [2026-04-15 23:09:00]: Vercel Build Error Fix (TS6133)
+  - *Details*: Fixed Vercel build failing due to strict TypeScript unused variable checks.
+  - *Tech Notes*: Removed unused `MapIcon` and `setZoom` from `WeatherMap.tsx` and `Loader2` from `Result.tsx` to resolve `TS6133` compilation errors.
