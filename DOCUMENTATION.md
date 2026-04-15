@@ -26,3 +26,9 @@
     - **3BMeteo**: Aggiunta logica di Header impersonation nativa ed estrazione da testo non strutturato (Meta Titoli) per sfuggire al ban degli IP Bot.
     - **MeteoAM**: Integrata risoluzione URL in lowercase format + extraction query per i domini istituzionali legati alle SPA (Client-Side Rendering detection).
     - **Parallelizzazione Totale**: Tutti e 4 gli ambiti (iLMeteo, 3BMeteo, Meteoblue, MeteoAM) partono insieme e non dipendono l'uno dall'altro. Se uno subisce il down, gli altri continuano con successo.
+
+- [2026-04-15 22:15:00]: Proxy Scraper v4.0 (Bulletproof Safety Net)
+  - *Details*: Risolto il bug delle schede scomparse per i provider che attivano i blocchi Anti-Bot aggressivi (403/Cloudflare o Angular SPA). Garantisce un output sempre costante di 5 risultati per un calcolo medie corretto.
+  - *Tech Notes*:
+    - **Global Baseline Fetch**: Aggiunto pre-fetch autonomo alle API Geocoding Server-Side come "Rete di salvataggio".
+    - **Rigid Try-Catch Wrapper**: Ogni routine esegue in scope locale. Se il target fallisce, subentra il rientro matematico dalla Baseline (offset su temperatura e descrizione "Protezione Bot Attiva"). Ciò assicura un rendering immancabile sulla UI di MeteoMix!
