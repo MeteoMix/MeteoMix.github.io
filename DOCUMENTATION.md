@@ -32,3 +32,17 @@
   - *Tech Notes*:
     - **Global Baseline Fetch**: Aggiunto pre-fetch autonomo alle API Geocoding Server-Side come "Rete di salvataggio".
     - **Rigid Try-Catch Wrapper**: Ogni routine esegue in scope locale. Se il target fallisce, subentra il rientro matematico dalla Baseline (offset su temperatura e descrizione "Protezione Bot Attiva"). Ciò assicura un rendering immancabile sulla UI di MeteoMix!
+
+- [2026-04-15 22:22:00]: Unified Deployment (Vercel)
+  - *Details*: Migrazione completa della strategia di deploy da GitHub Pages a Vercel. Questo permette di ospitare sia il Frontend che il Backend (Scraping Proxy) in un unico progetto, senza configurazioni complesse.
+  - *Tech Notes*:
+    - **Vercel API (Backend)**: Convertito `server.js` in una Serverless Function situata in `api/scrape.js`. Gestisce ora CORS e Scraping nativamente tramite l'ambiente di runtime di Vercel.
+    - **Frontend**:
+      - Ripristinato `BrowserRouter` per URL puliti.
+      - Aggiornato `Result.tsx` per chiamare l'endpoint relativo `/api/scrape`. Questo assicura che il frontend sappia sempre dove trovare il backend senza bisogno di variabili d'ambiente fisse.
+      - Aggiunto `vercel.json` per gestire il routing (SPA rewrite) e assicurare che le rotte React non vadano in 404.
+    - **Cleanup**: Rimossi workflow di GitHub Actions e configurazioni specifiche per GitHub Pages.
+- [2026-04-15 22:21:09]: Meteo Proxy Scraper V4.1 (Stealth Bypass)
+  - *Details*: Resolved Cloudflare bot protection on 3BMeteo and Meteoblue preventing real data collection.
+  - *Tech Notes*: Implemented `fetchWithCurl` using `child_process.exec` to bypass Node's `axios` TLS fingerprinting which was actively triggering 403 Forbidden on targeted websites. Extracted 3bMeteo real current temp from embedded Javascript config object `pubAdsCfg` stealthily. Evaluated MeteoAM, retaining it as Fallback-only due to SPA architecture limitations in Node.js environments.
+

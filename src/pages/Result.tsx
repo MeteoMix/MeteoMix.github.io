@@ -82,7 +82,9 @@ const Result: React.FC = () => {
         // --- PHASE 3: Fetch scraped data from Backend Proxy ---
         let otherData: Forecast[] = [];
         try {
-          const proxyRes = await fetch(`http://localhost:3001/api/scrape?q=${encodeURIComponent(queryParam)}`);
+          const isDev = import.meta.env.DEV;
+          const API_BASE = isDev ? 'http://localhost:3001' : ''; // On Vercel, it's relative
+          const proxyRes = await fetch(`${API_BASE}/api/scrape?q=${encodeURIComponent(queryParam)}`);
           if (proxyRes.ok) {
              const data = await proxyRes.json();
              otherData = data.forecasts || [];
