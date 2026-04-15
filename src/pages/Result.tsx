@@ -3,6 +3,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { ChevronLeft, Map as MapIcon, LayoutGrid, Loader2, CloudLightning } from 'lucide-react';
 import WeatherCard from '../components/WeatherCard';
 import WeatherMap from '../components/WeatherMap';
+import './Result.css';
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
@@ -23,14 +24,6 @@ interface Forecast {
   };
 }
 
-const providers = [
-  { name: 'Ilmeteo.net', url: 'https://www.ilmeteo.net' },
-  { name: '3BMeteo', url: 'https://www.3bmeteo.com' },
-  { name: 'iLMeteo', url: 'https://www.ilmeteo.it' },
-  { name: 'Meteo.it', url: 'https://www.meteo.it' },
-  { name: "Aeronautica Militare", url: 'http://www.meteoam.it' }
-];
-
 const Result: React.FC = () => {
   const queryParam = useQuery().get('q') || '';
   const [viewMode, setViewMode] = useState<'cards' | 'map'>('cards');
@@ -45,7 +38,6 @@ const Result: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        // 1. Geocoding
         const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(queryParam)}&count=1&language=it`);
         const geoData = await geoRes.json();
 
@@ -54,14 +46,12 @@ const Result: React.FC = () => {
         }
 
         const { latitude, longitude } = geoData.results[0];
-        // 2. Weather with extra parameters
         const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&current=relative_humidity_2m,precipitation&daily=temperature_2m_max,temperature_2m_min&timezone=auto`);
         const weatherData = await weatherRes.json();
 
         const currentWmoCode = weatherData.current_weather.weathercode;
         const currentTemp = weatherData.current_weather.temperature;
         
-        // Map WMO code to simplified conditions
         let condition: 'Sunny' | 'Cloudy' | 'Rainy' = 'Sunny';
         let description = 'Prevalentemente soleggiato';
 
@@ -73,7 +63,6 @@ const Result: React.FC = () => {
           description = 'Pioggia in corso';
         }
 
-        // Create the primary Open-Meteo prediction
         const realData: Forecast = {
           name: 'Open-Meteo (Dati Reali)',
           url: 'https://open-meteo.com',
@@ -91,21 +80,17 @@ const Result: React.FC = () => {
 
         setCoords({ lat: latitude, lon: longitude });
 
-        // --- PHASE 3: Fetch scraped data from Backend Proxy ---
         let otherData: Forecast[] = [];
         try {
           const isDev = import.meta.env.DEV;
-          const API_BASE = isDev ? 'http://localhost:3001' : ''; // On Vercel, it's relative
+          const API_BASE = isDev ? 'http://localhost:3001' : ''; 
           const proxyRes = await fetch(`${API_BASE}/api/scrape?q=${encodeURIComponent(queryParam)}`);
           if (proxyRes.ok) {
              const data = await proxyRes.json();
              otherData = data.forecasts || [];
-          } else {
-             throw new Error("Backend response not ok");
           }
         } catch (backendError) {
           console.warn("Backend Proxy non attivo o errore durante lo scraping reale.", backendError);
-          otherData = []; // No fake data allowed
         }
 
         setForecasts([realData, ...otherData]);
@@ -145,19 +130,19 @@ const Result: React.FC = () => {
   }, [forecasts]);
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header} className="glass-panel">
-        <div style={styles.headerContent}>
-          <Link to="/" style={styles.backButton}>
+    <div className="result-container">
+      <header className="result-header glass-panel">
+        <div className="result-header-content">
+          <Link to="/" className="back-button">
             <ChevronLeft size={24} />
-            <span>Nuova Ricerca</span>
+            <span>Indietro</span>
           </Link>
-          <div style={styles.titleWrapper}>
-            <h1 style={styles.title}>
-              Previsioni per <span className="text-gradient">"{queryParam}"</span>
+          <div className="title-wrapper">
+            <h1 className="result-title">
+              Meteo <span className="text-gradient">{queryParam}</span>
             </h1>
             {!isLoading && !error && avgData?.temp !== undefined && (
-              <div style={styles.avgBadge}>
+              <div className="avg-badge">
                 Media: {avgData.temp}°C
               </div>
             )}
@@ -165,22 +150,22 @@ const Result: React.FC = () => {
         </div>
       </header>
 
-      <main style={styles.main}>
-        <div style={styles.controls}>
-          <div style={styles.toggleWrapper} className="glass-panel">
+      <main className="result-main">
+        <div className="controls">
+          <div className="toggle-wrapper glass-panel">
             <button 
-              style={{...styles.toggleBtn, ...(viewMode === 'cards' ? styles.activeToggle : {})}}
+              className={`toggle-btn ${viewMode === 'cards' ? 'active-toggle' : ''}`}
               onClick={() => setViewMode('cards')}
             >
               <LayoutGrid size={20} />
-              Lista Siti
+              Lista
             </button>
             <button 
-              style={{...styles.toggleBtn, ...(viewMode === 'map' ? styles.activeToggle : {})}}
+              className={`toggle-btn ${viewMode === 'map' ? 'active-toggle' : ''}`}
               onClick={() => setViewMode('map')}
             >
               <MapIcon size={20} />
-              Mappa Interattiva
+              Mappa
             </button>
           </div>
         </div>
@@ -194,7 +179,7 @@ const Result: React.FC = () => {
               <p>{error}</p>
             </div>
           ) : viewMode === 'cards' ? (
-            <div style={styles.grid}>
+            <div className="result-grid">
               {forecasts.map((f, idx) => (
                 <WeatherCard 
                    key={idx}
@@ -205,7 +190,7 @@ const Result: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div style={styles.mapContainer}>
+            <div className="map-outer-container">
               <WeatherMap 
                 locationQuery={queryParam} 
                 lat={coords?.lat} 
@@ -223,112 +208,14 @@ const Result: React.FC = () => {
 };
 
 
-const styles = {
-  container: {
-    minHeight: '100vh',
-    padding: '2rem 1.5rem',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '2rem',
-  },
-  header: {
-    padding: '1.5rem',
-    position: 'sticky' as const,
-    top: '1rem',
-    zIndex: 10,
-  },
-  headerContent: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '2rem',
-    position: 'relative' as const,
-  },
-  backButton: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    color: 'var(--text-secondary)',
-    fontWeight: 500,
-    transition: 'var(--transition)',
-    textDecoration: 'none',
-  },
-  titleWrapper: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1.5rem',
-    flex: 1,
-    justifyContent: 'center',
-    paddingRight: '6rem', // Balance back button
-  },
-  title: {
-    fontSize: '2rem',
-    margin: 0,
-  },
-  avgBadge: {
-    background: 'rgba(92, 107, 192, 0.2)',
-    border: '1px solid rgba(92, 107, 192, 0.4)',
-    color: '#8e99f3',
-    padding: '0.25rem 0.75rem',
-    borderRadius: 'var(--radius-full)',
-    fontWeight: 700,
-    fontSize: '1.1rem',
-  },
-  main: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    gap: '2rem',
-    flex: 1,
-  },
-  controls: {
-    display: 'flex',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  toggleWrapper: {
-    display: 'flex',
-    padding: '0.5rem',
-    gap: '0.5rem',
-    borderRadius: '100px',
-  },
-  toggleBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.75rem 1.5rem',
-    borderRadius: '100px',
-    color: 'var(--text-secondary)',
-    fontWeight: 600,
-    fontSize: '1rem',
-    transition: 'var(--transition)',
-  },
-  activeToggle: {
-    background: 'linear-gradient(135deg, #5c6bc0 0%, #26418f 100%)',
-    color: '#fff',
-    boxShadow: 'var(--shadow-md)',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gap: '2rem',
-    width: '100%',
-  },
-  mapContainer: {
-    width: '100%',
-    animation: 'fadeIn 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards',
-  }
-};
-
 const LoadingScanner = () => {
     const [step, setStep] = React.useState(0);
     const steps = [
-        "Inizializzazione scansione satellitare...",
-        "Interrogazione modelli GFS...",
-        "Sincronizzazione radar RainViewer...",
-        "Analisi dati reali iLMeteo & Giuliacci...",
-        "Aggregazione multi-fonte in corso..."
+        "Inizializzazione scansione...",
+        "Interrogazione modelli...",
+        "Sincronizzazione radar...",
+        "Analisi dati iLMeteo...",
+        "Aggregazione multi-fonte..."
     ];
 
     React.useEffect(() => {
@@ -349,7 +236,7 @@ const LoadingScanner = () => {
             </div>
             
             <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                <h3 className="text-gradient animate-pulse-soft" style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                <h3 className="text-gradient animate-pulse-soft" style={{ fontSize: '1.25rem', fontWeight: 700 }}>
                     {steps[step]}
                 </h3>
                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
@@ -366,8 +253,8 @@ const LoadingScanner = () => {
                         />
                     ))}
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '1rem' }}>
-                    Stiamo bypassando i blocchi per garantirti solo dati reali
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '1rem', padding: '0 1rem' }}>
+                    Sincronizzazione dati reali in corso
                 </p>
             </div>
         </div>

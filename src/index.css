@@ -123,6 +123,12 @@ button {
   padding: 0 1.5rem;
 }
 
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+}
+
 /* Map Overrides & UI */
 .leaflet-container {
   background-color: #0b0c10 !important;
@@ -157,12 +163,27 @@ button {
   pointer-events: auto;
   border-radius: 20px;
   padding: 20px;
-  background: rgba(15, 17, 26, 0.6);
+  background: rgba(15, 17, 26, 0.7);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   animation: slideInRight 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+@media (max-width: 768px) {
+  .map-overlay-card {
+    position: relative;
+    top: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 17, 26, 0.4);
+    animation: fadeIn 0.8s ease;
+  }
+}
+
 
 @keyframes slideInRight {
   from { opacity: 0; transform: translateX(50px) scale(0.9); }

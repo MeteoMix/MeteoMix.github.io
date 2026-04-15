@@ -102,3 +102,14 @@
     - **Dynamic Status Messages**: Aggiunto un ciclo di messaggi di stato (es. 'Interrogazione modelli GFS...', 'Sincronizzazione radar...') per intrattenere l'utente durante l'attesa.
     - **Pulse Effects**: Applicati effetti di pulsazione soft e floating icon per un look dinamico e professionale.
 
+- [2026-04-15 22:52:00]: Fix RainViewer Radar & Zoom
+  - *Details*: Risolto il fastidioso messaggio "Zoom Level Not Supported" sostituendo il parametro limitatore su Leaflet, permettendo l'esplorazione a qualsiasi raggio di ingrandimento.
+  - *Tech Notes*: Modificata la proprietà `maxZoom={12}` in `maxNativeZoom={12}` sul `<TileLayer>` di RainViewer in `WeatherMap.tsx`. In questo modo Leaflet smette di interrogare il server per le tile inesistenti ad alti zoom e fa un "upscale" software nativo dell'ultima tile utile.
+
+- [2026-04-15 23:05:00]: Mobile Optimization & Style Refactoring
+  - *Details*: Refactored all inline styles into dedicated CSS files (`Home.css`, `Result.css`, `WeatherCard.css`, `WeatherMap.css`). Implemented mobile-first responsive design across all screens.
+  - *Tech Notes*: 
+    - Moved Map overlay card to a relative stack on mobile for better usability.
+    - Simplified search interface on mobile (vertical stack).
+    - Reduced typography scales for mobile viewports.
+    - Added media queries to `index.css` for global responsive utilities.

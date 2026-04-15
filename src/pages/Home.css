@@ -1,0 +1,129 @@
+.home-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 1rem;
+}
+
+.home-center-box {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+}
+
+.home-bg-icon {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.home-header {
+  textAlign: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  text-align: center;
+}
+
+.home-title {
+  fontSize: 4rem;
+  font-weight: 800;
+  line-height: 1.1;
+  font-size: 4rem;
+}
+
+.home-subtitle {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 650px;
+  padding: 0.75rem 1rem 0.75rem 1.5rem;
+  border-radius: 100px;
+  transition: var(--transition);
+}
+
+.search-wrapper-focused {
+  box-shadow: 0 0 0 2px rgba(142, 153, 243, 0.5), var(--shadow-glass);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.search-icon {
+  margin-right: 1rem;
+  transition: var(--transition);
+}
+
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.search-button {
+  background: linear-gradient(135deg, #5c6bc0 0%, #26418f 100%);
+  color: #ffffff;
+  padding: 0.8rem 2rem;
+  border-radius: 100px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+  margin-left: 1rem;
+}
+
+@media (max-width: 768px) {
+  .home-title {
+    font-size: 2.5rem;
+  }
+  
+  .home-subtitle {
+    font-size: 1rem;
+    padding: 0 1rem;
+  }
+
+  .home-center-box {
+    gap: 2rem;
+  }
+
+  .search-wrapper {
+    flex-direction: column;
+    border-radius: 20px;
+    padding: 1.5rem;
+    gap: 1rem;
+  }
+
+  .search-icon {
+    display: none;
+  }
+
+  .search-input {
+    width: 100%;
+    text-align: center;
+    font-size: 1.1rem;
+  }
+
+  .search-button {
+    width: 100%;
+    margin-left: 0;
+    padding: 1rem;
+  }
+}
