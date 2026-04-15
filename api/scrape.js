@@ -95,13 +95,28 @@ async function scrapeIlMeteo(cityRaw) {
 async function scrapeWttr(cityRaw) {
     const url = `https://wttr.in/${encodeURIComponent(cityRaw.trim())}?format=j1`;
     try {
-        const jsonStr = await fetchWithCurl(url);
+      const jsonStr = await fetchWithCurl(url);
         const data = JSON.parse(jsonStr);
-        const temp = parseInt(data.current_condition[0].temp_C, 10);
-        const descObj = data.current_condition[0].weatherDesc[0].value;
+        const current = data.current_condition[0];
+        const temp = parseInt(current.temp_C, 10);
+        const humidity = parseInt(current.humidity, 10);
+        const windSpeed = parseInt(current.windspeedKmph, 10);
+        const precipitation = parseFloat(current.precipMM);
+        
+        const high = parseInt(data.weather[0].maxtempC, 10);
+        const low = parseInt(data.weather[0].mintempC, 10);
+
+        const descObj = current.weatherDesc[0].value;
         if (isNaN(temp)) throw new Error("Temp not found");
         const cond = parseConditionFromText(descObj);
-        return { name: 'Wttr.in (WorldWeather)', url: `https://wttr.in/${encodeURIComponent(cityRaw.trim())}`, prediction: { temp, condition: cond, description: translateCondition(cond) } };
+        return { 
+           name: 'Wttr.in (WorldWeather)', 
+           url: `https://wttr.in/${encodeURIComponent(cityRaw.trim())}`, 
+           prediction: { 
+             temp, condition: cond, description: translateCondition(cond),
+             humidity, windSpeed, precipitation, high, low
+           } 
+        };
     } catch (err) {
         throw err;
     }
@@ -124,10 +139,22 @@ async function scrapeYrNo(cityRaw) {
         const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${coords.latitude}&lon=${coords.longitude}`;
         const jsonStr = await fetchWithCurl(url);
         const data = JSON.parse(jsonStr);
-        const temp = Math.round(data.properties.timeseries[0].data.instant.details.air_temperature);
+        const details = data.properties.timeseries[0].data.instant.details;
+        const temp = Math.round(details.air_temperature);
+        const humidity = Math.round(details.relative_humidity);
+        const windSpeed = Math.round(details.wind_speed * 3.6); // m/s to km/h
+        const precipitation = data.properties.timeseries[0].data.next_1_hours?.details?.precipitation_amount || 0;
+
         const symbol = data.properties.timeseries[0].data.next_1_hours?.summary?.symbol_code || data.properties.timeseries[0].data.next_6_hours?.summary?.symbol_code || 'cloudy';
         const cond = parseConditionFromText(symbol);
-        return { name: 'Yr.no (MET Norway)', url: `https://www.yr.no/en/forecast/daily-table/${coords.latitude},${coords.longitude}`, prediction: { temp, condition: cond, description: translateCondition(cond) } };
+        return { 
+           name: 'Yr.no (MET Norway)', 
+           url: `https://www.yr.no/en/forecast/daily-table/${coords.latitude},${coords.longitude}`, 
+           prediction: { 
+             temp, condition: cond, description: translateCondition(cond),
+             humidity, windSpeed, precipitation
+           } 
+        };
     } catch(err) {
         console.warn(`[SCRAPE FAIL] Yr.no per ${cityRaw}:`, err.message);
         throw err;
@@ -141,9 +168,24 @@ async function scrape7Timer(cityRaw) {
         const jsonStr = await fetchWithCurl(url);
         const data = JSON.parse(jsonStr);
         const temp = data.dataseries[0].temp2m;
+        const windPower = data.dataseries[0].wind10m.speed;
+        let windSpeed = 10;
+        if (windPower < 3) windSpeed = 10;
+        else if (windPower < 5) windSpeed = 20;
+        else windSpeed = 40;
+        
+        const humidity = parseInt(data.dataseries[0].rh2m.replace(/\D/g, ''), 10) || 50;
+
         const weatherObj = data.dataseries[0].weather;
         const cond = parseConditionFromText(weatherObj);
-        return { name: '7Timer! (NOAA)', url: `http://www.7timer.info/`, prediction: { temp, condition: cond, description: translateCondition(cond) } };
+        return { 
+           name: '7Timer! (NOAA)', 
+           url: `http://www.7timer.info/`, 
+           prediction: { 
+             temp, condition: cond, description: translateCondition(cond),
+             humidity, windSpeed
+           } 
+        };
     } catch(err) {
         console.warn(`[SCRAPE FAIL] 7Timer per ${cityRaw}:`, err.message);
         throw err;

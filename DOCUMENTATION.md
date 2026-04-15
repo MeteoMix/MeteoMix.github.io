@@ -91,6 +91,10 @@
 - [2026-04-15 22:44:00]: Aggiunta KPI Meteo Avanzati in Mappa
   - *Details*: Per rendere la mappa realmente utile e informativa, è stata integrata una griglia contenente KPI meteorologici avanzati. Ora è possibile visualizzare a colpo d'occhio Velocità del Vento, Umidità, Probabilità di Precipitazione e Temperature Max/Min.
   - *Tech Notes*: Modificato `Result.tsx` per estrarre extra parametri dall'API di Open-Meteo (`current=relative_humidity_2m,precipitation` e `daily=temperature_2m_max,temperature_2m_min`). Tali dati vengono passati via props a `WeatherMap.tsx` e renderizzati in un CSS grid layout semitrasparente tramite le icone di `lucide-react`.
+
+- [2026-04-15 22:48:30]: Full-Backend KPI Aggregation (Meteo Mix Reale)
+  - *Details*: Garantita l'accuratezza totale e la "congruenza" estendendo l'estrazione dei KPI avanzati a tutti gli endpoint scraper (backend). Ora Vento, Umidità, Precipitazioni e Termiche Min/Max mostrate non sono solo quelle prelevate in locale, ma costituiscono la media assoluta elaborata tra tutti i super-provider!
+  - *Tech Notes*: Riscritta la logica di calcolo media di `Result.tsx` basandola su `React.useMemo`. Adattati i parser JSON in `server.js` e in `api/scrape.js` (per Vercel) su `Wttr.in`, `Yr.no` e `7Timer!` aggiungendo i nodi per l'estrazione di vento, umidità e millimetri di pioggia.
 - [2026-04-15 22:45:52]: Premium Loading Experience (Satellite Scanner)
   - *Details*: Sostituito lo spinner di caricamento standard con un'animazione 'WOW' a tema spaziale/satellitare.
   - *Tech Notes*:

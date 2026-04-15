@@ -15,6 +15,11 @@ interface Forecast {
     temp: number;
     condition: 'Sunny' | 'Cloudy' | 'Rainy';
     description: string;
+    windSpeed?: number;
+    humidity?: number;
+    precipitation?: number;
+    high?: number;
+    low?: number;
   };
 }
 
@@ -30,7 +35,7 @@ const Result: React.FC = () => {
   const queryParam = useQuery().get('q') || '';
   const [viewMode, setViewMode] = useState<'cards' | 'map'>('cards');
   const [forecasts, setForecasts] = useState<Forecast[]>([]);
-  const [coords, setCoords] = useState<{lat: number, lon: number, extraData?: any} | null>(null);
+  const [coords, setCoords] = useState<{lat: number, lon: number} | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,16 +61,6 @@ const Result: React.FC = () => {
         const currentWmoCode = weatherData.current_weather.weathercode;
         const currentTemp = weatherData.current_weather.temperature;
         
-        const extraData = {
-          windSpeed: weatherData.current_weather?.windspeed || '--',
-          humidity: weatherData.current?.relative_humidity_2m || '--',
-          precipitation: weatherData.current?.precipitation || 0,
-          high: weatherData.daily?.temperature_2m_max?.[0] || '--',
-          low: weatherData.daily?.temperature_2m_min?.[0] || '--',
-        };
-        
-        setCoords({ lat: latitude, lon: longitude, extraData });
-
         // Map WMO code to simplified conditions
         let condition: 'Sunny' | 'Cloudy' | 'Rainy' = 'Sunny';
         let description = 'Prevalentemente soleggiato';
@@ -85,9 +80,16 @@ const Result: React.FC = () => {
           prediction: {
             temp: Math.round(currentTemp),
             condition,
-            description
+            description,
+            windSpeed: weatherData.current_weather?.windspeed,
+            humidity: weatherData.current?.relative_humidity_2m,
+            precipitation: weatherData.current?.precipitation,
+            high: weatherData.daily?.temperature_2m_max?.[0],
+            low: weatherData.daily?.temperature_2m_min?.[0],
           }
         };
+
+        setCoords({ lat: latitude, lon: longitude });
 
         // --- PHASE 3: Fetch scraped data from Backend Proxy ---
         let otherData: Forecast[] = [];
@@ -117,9 +119,30 @@ const Result: React.FC = () => {
     fetchWeather();
   }, [queryParam]);
 
-  const avgTemp = forecasts.length > 0 
-    ? Math.round(forecasts.reduce((acc, curr) => acc + curr.prediction.temp, 0) / forecasts.length) 
-    : undefined;
+  const avgData = React.useMemo(() => {
+    if (forecasts.length === 0) return null;
+    let counts = { temp: 0, windSpeed: 0, humidity: 0, precipitation: 0, high: 0, low: 0 };
+    let sums = { temp: 0, windSpeed: 0, humidity: 0, precipitation: 0, high: 0, low: 0 };
+
+    forecasts.forEach(f => {
+      const p = f.prediction;
+      if (typeof p.temp === 'number' && !isNaN(p.temp)) { sums.temp += p.temp; counts.temp++; }
+      if (typeof p.windSpeed === 'number' && !isNaN(p.windSpeed)) { sums.windSpeed += p.windSpeed; counts.windSpeed++; }
+      if (typeof p.humidity === 'number' && !isNaN(p.humidity)) { sums.humidity += p.humidity; counts.humidity++; }
+      if (typeof p.precipitation === 'number' && !isNaN(p.precipitation)) { sums.precipitation += p.precipitation; counts.precipitation++; }
+      if (typeof p.high === 'number' && !isNaN(p.high)) { sums.high += p.high; counts.high++; }
+      if (typeof p.low === 'number' && !isNaN(p.low)) { sums.low += p.low; counts.low++; }
+    });
+
+    return {
+      temp: counts.temp > 0 ? Math.round(sums.temp / counts.temp) : undefined,
+      windSpeed: counts.windSpeed > 0 ? Math.round(sums.windSpeed / counts.windSpeed) : '--',
+      humidity: counts.humidity > 0 ? Math.round(sums.humidity / counts.humidity) : '--',
+      precipitation: counts.precipitation > 0 ? Number((sums.precipitation / counts.precipitation).toFixed(1)) : 0,
+      high: counts.high > 0 ? Math.round(sums.high / counts.high) : '--',
+      low: counts.low > 0 ? Math.round(sums.low / counts.low) : '--',
+    };
+  }, [forecasts]);
 
   return (
     <div style={styles.container}>
@@ -133,9 +156,9 @@ const Result: React.FC = () => {
             <h1 style={styles.title}>
               Previsioni per <span className="text-gradient">"{queryParam}"</span>
             </h1>
-            {!isLoading && !error && avgTemp !== undefined && (
+            {!isLoading && !error && avgData?.temp !== undefined && (
               <div style={styles.avgBadge}>
-                Media: {avgTemp}°C
+                Media: {avgData.temp}°C
               </div>
             )}
           </div>
@@ -177,7 +200,7 @@ const Result: React.FC = () => {
                    key={idx}
                   siteName={f.name}
                   url={f.url}
-                  prediction={f.prediction}
+                  prediction={f.prediction as any}
                 />
               ))}
             </div>
@@ -187,9 +210,9 @@ const Result: React.FC = () => {
                 locationQuery={queryParam} 
                 lat={coords?.lat} 
                 lon={coords?.lon} 
-                avgTemp={avgTemp}
+                avgTemp={avgData?.temp}
                 currentCondition={forecasts[0]?.prediction?.condition}
-                extraData={coords?.extraData}
+                extraData={avgData || undefined}
               />
             </div>
           )}
